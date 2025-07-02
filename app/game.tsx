@@ -9,12 +9,12 @@ import { Button } from "@/components/ui/button"
 import { useEffect, useRef } from "react"
 
 export default function Game() {
-  const { gameState, move, newGame, isLoading } = useGame()
+  const { gameState, move, isLoading, restart, continueAfterWin } = useGame()
   const gameContainerRef = useRef<HTMLDivElement>(null)
 
   useInputHandler({
     onMove: move,
-    disabled: gameState.gameOver || gameState.won,
+    disabled: gameState.gameStatus === "lost" || gameState.gameStatus === "won",
   })
 
   // Mobile focus and interaction management
@@ -123,7 +123,7 @@ export default function Game() {
           <p className="text-gray-600 text-sm">Swipe or use WASD/QE keys to move tiles</p>
         </div>
 
-        <GameControls score={gameState.score} bestScore={gameState.bestScore} onNewGame={newGame} />
+        <GameControls gameState={gameState} onRestart={restart} onContinue={continueAfterWin} />
 
         <Card className="bg-white/80 backdrop-blur-sm shadow-xl">
           <CardContent className="p-6">
@@ -131,25 +131,25 @@ export default function Game() {
           </CardContent>
         </Card>
 
-        {gameState.gameOver && (
+        {gameState.gameStatus === "lost" && (
           <Card className="bg-red-50 border-red-200">
             <CardContent className="p-4 text-center">
               <h2 className="text-xl font-bold text-red-800 mb-2">Game Over!</h2>
               <p className="text-red-600 mb-4">No more moves available</p>
-              <Button onClick={newGame} className="bg-red-600 hover:bg-red-700">
+              <Button onClick={restart} className="bg-red-600 hover:bg-red-700">
                 Try Again
               </Button>
             </CardContent>
           </Card>
         )}
 
-        {gameState.won && !gameState.gameOver && (
+        {gameState.gameStatus === "won" && (
           <Card className="bg-green-50 border-green-200">
             <CardContent className="p-4 text-center">
               <h2 className="text-xl font-bold text-green-800 mb-2">You Win!</h2>
               <p className="text-green-600 mb-4">You reached 2048!</p>
               <div className="space-x-2">
-                <Button onClick={newGame} className="bg-green-600 hover:bg-green-700">
+                <Button onClick={restart} className="bg-green-600 hover:bg-green-700">
                   New Game
                 </Button>
               </div>
