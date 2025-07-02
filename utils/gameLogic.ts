@@ -84,136 +84,89 @@ function moveTiles(
   scoreGained: number
   hasMoved: boolean
 } {
-  const newTiles: Tile[] = []
+  const vector = DIRECTION_VECTORS[direction]
   let scoreGained = 0
   let hasMoved = false
 
-  // Group tiles by their "lanes" in the movement direction
-  const lanes = groupTilesByLanes(tiles, direction)
+  // Create a mutable copy of tiles and a map for quick lookups
+  let newTiles = tiles.map((t) => ({ ...t, isMerged: false, isNew: false }))
+  const tileMap = new Map<string, Tile>()
+  const updateTileMap = () => {
+    tileMap.clear()
+    newTiles.forEach((t) => tileMap.set(`${t.position.q},${t.position.r}`, t))
+  }
+  updateTileMap()
 
-  for (const lane of lanes) {
-    const { movedLane, laneScore, laneMoved } = moveLane(lane, direction)
-    newTiles.push(...movedLane)
-    scoreGained += laneScore
-    hasMoved = hasMoved || laneMoved
+  // Define traversal order based on direction
+  const sortedTiles = [...newTiles].sort((a, b) => {
+    if (direction === "n") return a.position.r - b.position.r
+    if (direction === "s") return b.position.r - a.position.r
+    if (direction === "nw") return a.position.q - b.position.q
+    if (direction === "se") return b.position.q - a.position.q
+    if (direction === "ne") return a.position.q + a.position.r - (b.position.q + b.position.r)
+    if (direction === "sw") return b.position.q + b.position.r - (a.position.q + a.position.r)
+    return 0
+  })
+
+  for (const tile of sortedTiles) {
+    let currentPos = tile.position
+    let nextPos = { q: currentPos.q + vector.q, r: currentPos.r + vector.r }
+
+    // Find the farthest possible position
+    while (ALL_POSITIONS.some((p) => positionsEqual(p, nextPos)) && !tileMap.has(`${nextPos.q},${nextPos.r}`)) {
+      currentPos = nextPos
+      nextPos = { q: currentPos.q + vector.q, r: currentPos.r + vector.r }
+    }
+
+    // Check for merge
+    const blockingTile = tileMap.get(`${nextPos.q},${nextPos.r}`)
+    const currentTileInMap = tileMap.get(`${tile.position.q},${tile.position.r}`)
+
+    if (blockingTile && currentTileInMap && blockingTile.value === currentTileInMap.value && !blockingTile.isMerged) {
+      // Perform merge
+      const mergedValue = blockingTile.value * 2
+      scoreGained += mergedValue
+      blockingTile.value = mergedValue
+      blockingTile.isMerged = true
+
+      // Remove the moved tile
+      newTiles = newTiles.filter((t) => t.id !== tile.id)
+      hasMoved = true
+      updateTileMap()
+    } else if (!positionsEqual(tile.position, currentPos)) {
+      // Move tile to new position
+      if (currentTileInMap) {
+        currentTileInMap.position = currentPos
+        hasMoved = true
+        updateTileMap()
+      }
+    }
   }
 
   return { tiles: newTiles, scoreGained, hasMoved }
 }
 
-function groupTilesByLanes(tiles: Tile[], direction: Direction): Tile[][] {
-  const lanes: Map<string, Tile[]> = new Map()
+function canMakeAnyMove(tiles: Tile[]): boolean {
+  if (tiles.length < ALL_POSITIONS.length) {
+    return true // There are empty cells, so a move is always possible
+  }
+
+  const tileMap = new Map<string, Tile>()
+  tiles.forEach((t) => tileMap.set(`${t.position.q},${t.position.r}`, t))
 
   for (const tile of tiles) {
-    const laneKey = getLaneKey(tile.position, direction)
-    if (!lanes.has(laneKey)) {
-      lanes.set(laneKey, [])
-    }
-    lanes.get(laneKey)!.push(tile)
-  }
+    for (const dir in DIRECTION_VECTORS) {
+      const vector = DIRECTION_VECTORS[dir as Direction]
+      const neighborPos = { q: tile.position.q + vector.q, r: tile.position.r + vector.r }
+      const neighbor = tileMap.get(`${neighborPos.q},${neighborPos.r}`)
 
-  return Array.from(lanes.values())
-}
-
-function getLaneKey(position: Position, direction: Direction): string {
-  // Create a unique key for tiles that move in the same "lane"
-  switch (direction) {
-    case "n":
-    case "s":
-      return `q${position.q}`
-    case "ne":
-    case "sw":
-      return `r${position.r}`
-    case "nw":
-    case "se":
-      return `s${-position.q - position.r}`
-    default:
-      return `${position.q},${position.r}`
-  }
-}
-
-function moveLane(
-  lane: Tile[],
-  direction: Direction,
-): {
-  movedLane: Tile[]
-  laneScore: number
-  laneMoved: boolean
-} {
-  if (lane.length === 0) return { movedLane: [], laneScore: 0, laneMoved: false }
-
-  // Sort tiles by their position in the movement direction
-  const sortedTiles = [...lane].sort((a, b) => {
-    return getDistanceInDirection(a.position, direction) - getDistanceInDirection(b.position, direction)
-  })
-
-  const movedTiles: Tile[] = []
-  let laneScore = 0
-  let laneMoved = false
-
-  for (let i = 0; i < sortedTiles.length; i++) {
-    const tile = sortedTiles[i]
-    const newPosition = findFarthestPosition(tile.position, direction, [...movedTiles, ...sortedTiles.slice(i + 1)])
-
-    // Check for merge
-    const adjacentTile = movedTiles.find((t) => positionsEqual(t.position, newPosition))
-
-    if (adjacentTile && adjacentTile.value === tile.value && !adjacentTile.isMerged) {
-      // Merge tiles
-      adjacentTile.value *= 2
-      adjacentTile.isMerged = true
-      laneScore += adjacentTile.value
-      laneMoved = true
-    } else {
-      // Move tile
-      const movedTile = {
-        ...tile,
-        position: newPosition,
-        isNew: false,
-        isMerged: false,
+      if (neighbor && neighbor.value === tile.value) {
+        return true // Found a possible merge
       }
-
-      if (!positionsEqual(tile.position, newPosition)) {
-        laneMoved = true
-      }
-
-      movedTiles.push(movedTile)
     }
   }
 
-  return { movedLane: movedTiles, laneScore, laneMoved }
-}
-
-function getDistanceInDirection(position: Position, direction: Direction): number {
-  const vector = DIRECTION_VECTORS[direction]
-  return position.q * vector.q + position.r * vector.r
-}
-
-function findFarthestPosition(start: Position, direction: Direction, obstacles: Tile[]): Position {
-  const vector = DIRECTION_VECTORS[direction]
-  let current = start
-  let next = { q: current.q + vector.q, r: current.r + vector.r }
-
-  while (
-    ALL_POSITIONS.some((pos) => positionsEqual(pos, next)) &&
-    !obstacles.some((tile) => positionsEqual(tile.position, next))
-  ) {
-    current = next
-    next = { q: current.q + vector.q, r: current.r + vector.r }
-  }
-
-  return current
-}
-
-function canMakeAnyMove(tiles: Tile[]): boolean {
-  const directions: Direction[] = ["n", "ne", "se", "s", "sw", "nw"]
-
-  for (const direction of directions) {
-    const { hasMoved } = moveTiles(tiles, direction)
-    if (hasMoved) return true
-  }
-
-  return false
+  return false // Board is full and no merges are possible
 }
 
 export function continueGame(gameState: GameState): GameState {

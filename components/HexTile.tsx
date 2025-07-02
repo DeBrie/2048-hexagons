@@ -11,22 +11,22 @@ interface HexTileProps {
 }
 
 export function HexTile({ tile, size, centerX, centerY }: HexTileProps) {
+  // Calculate the target position
   const { x, y } = axialToPixel(tile.position, size * 0.8)
-  const actualX = centerX + x
-  const actualY = centerY + y
+  const targetX = centerX + x
+  const targetY = centerY + y
 
-  // Create hexagon path
+  // Define the hexagon shape relative to a (0,0) center
   const points = []
   for (let i = 0; i < 6; i++) {
     const angle = (Math.PI / 3) * i
-    const px = actualX + size * 0.7 * Math.cos(angle)
-    const py = actualY + size * 0.7 * Math.sin(angle)
+    const px = size * 0.7 * Math.cos(angle)
+    const py = size * 0.7 * Math.sin(angle)
     points.push(`${px},${py}`)
   }
-
   const pathData = `M ${points.join(" L ")} Z`
 
-  // Color based on tile value
+  // Determine tile color and text style
   const getColor = (value: number) => {
     const colors = {
       2: "#eee4da",
@@ -43,20 +43,27 @@ export function HexTile({ tile, size, centerX, centerY }: HexTileProps) {
     }
     return colors[value as keyof typeof colors] || "#3c3a32"
   }
-
   const textColor = tile.value <= 4 ? "#776e65" : "#f9f6f2"
   const fontSize = tile.value >= 1000 ? size * 0.25 : size * 0.3
 
+  // Apply the correct animation class based on the tile's state
+  const animationClass = tile.isNew ? "animate-tile-spawn" : tile.isMerged ? "animate-tile-merge" : ""
+
   return (
     <g
-      className={`transition-all duration-200 ${tile.isNew ? "animate-pulse" : ""} ${tile.isMerged ? "animate-bounce" : ""}`}
+      // Use CSS transform for smooth animation of position
+      style={{
+        transform: `translate(${targetX}px, ${targetY}px)`,
+        transition: "transform 0.15s ease-in-out",
+      }}
+      className={animationClass}
       role="gridcell"
       aria-label={`Tile with value ${tile.value}`}
     >
       <path d={pathData} fill={getColor(tile.value)} stroke="#bbada0" strokeWidth="2" className="drop-shadow-sm" />
       <text
-        x={actualX}
-        y={actualY}
+        x={0}
+        y={0}
         textAnchor="middle"
         dominantBaseline="central"
         fontSize={fontSize}

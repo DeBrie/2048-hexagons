@@ -24,30 +24,36 @@ export function GameBoard({ gameState, size = 400 }: GameBoardProps) {
       role="grid"
       aria-label="2048 Hexagon game board"
     >
-      <svg width={size} height={size} className="absolute inset-0" viewBox={`0 0 ${size} ${size}`}>
+      <svg width={size} height={size} className="absolute inset-0 overflow-visible" viewBox={`0 0 ${size} ${size}`}>
         {/* Background hexagons */}
-        {allPositions.map((pos, index) => {
-          const { x, y } = axialToPixel(pos, TILE_SIZE * 0.8)
-          const actualX = centerX + x
-          const actualY = centerY + y
+        <g className="background-grid">
+          {allPositions.map((pos, index) => {
+            const { x, y } = axialToPixel(pos, TILE_SIZE * 0.8)
+            const actualX = centerX + x
+            const actualY = centerY + y
 
-          const points = []
-          for (let i = 0; i < 6; i++) {
-            const angle = (Math.PI / 3) * i
-            const px = actualX + TILE_SIZE * 0.7 * Math.cos(angle)
-            const py = actualY + TILE_SIZE * 0.7 * Math.sin(angle)
-            points.push(`${px},${py}`)
-          }
+            const points = []
+            for (let i = 0; i < 6; i++) {
+              const angle = (Math.PI / 3) * i
+              const px = actualX + TILE_SIZE * 0.7 * Math.cos(angle)
+              const py = actualY + TILE_SIZE * 0.7 * Math.sin(angle)
+              points.push(`${px},${py}`)
+            }
 
-          const pathData = `M ${points.join(" L ")} Z`
+            const pathData = `M ${points.join(" L ")} Z`
 
-          return <path key={`bg-${index}`} d={pathData} fill="#cdc1b4" stroke="#bbada0" strokeWidth="2" opacity="0.5" />
-        })}
+            return (
+              <path key={`bg-${index}`} d={pathData} fill="#cdc1b4" stroke="#bbada0" strokeWidth="2" opacity="0.5" />
+            )
+          })}
+        </g>
 
-        {/* Tile components */}
-        {gameState.tiles.map((tile) => (
-          <HexTile key={tile.id} tile={tile} size={TILE_SIZE} centerX={centerX} centerY={centerY} />
-        ))}
+        {/* Tile components are now grouped */}
+        <g className="tiles-container">
+          {gameState.tiles.map((tile) => (
+            <HexTile key={tile.id} tile={tile} size={TILE_SIZE} centerX={centerX} centerY={centerY} />
+          ))}
+        </g>
       </svg>
     </div>
   )
