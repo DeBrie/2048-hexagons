@@ -1,0 +1,25 @@
+{
+  "name": "2048 Hexagon",
+  "short_name": "2048 Hex",
+  "description": "A hexagonal twist on the classic 2048 puzzle game",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fef3e2",
+  "theme_color": "#f97316",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["games", "entertainment"],
+  "lang": "en",
+  "dir": "ltr"
+}
