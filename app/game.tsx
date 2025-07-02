@@ -1,10 +1,10 @@
 "use client"
 
-import { useGame } from "./hooks/useGame"
-import { useInputHandler } from "./hooks/useInputHandler"
-import { GameBoard } from "./components/GameBoard"
-import { GameControls } from "./components/GameControls"
-import { getGameStatusAnnouncement } from "./utils/accessibility"
+import { useGame } from "../hooks/useGame"
+import { useInputHandler } from "../hooks/useInputHandler"
+import { GameBoard } from "../components/GameBoard"
+import { GameControls } from "../components/GameControls"
+import { getGameStatusAnnouncement } from "../utils/accessibility"
 
 export default function Game() {
   const { gameState, isLoading, move, continueAfterWin, restart } = useGame()
