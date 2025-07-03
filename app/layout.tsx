@@ -27,9 +27,6 @@ export const metadata: Metadata = {
     "apple-mobile-web-app-status-bar-style": "default",
     "apple-mobile-web-app-title": "2048 Hexagon",
   },
-  icons: {
-    icon: './favicon.ico',
-  },
   openGraph: {
     title: "2048 Hexagon - Puzzle Game",
     description:
