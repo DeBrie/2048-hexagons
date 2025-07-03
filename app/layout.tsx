@@ -27,7 +27,20 @@ export const metadata: Metadata = {
     "apple-mobile-web-app-status-bar-style": "default",
     "apple-mobile-web-app-title": "2048 Hexagon",
   },
-    generator: 'v0.dev'
+  generator: 'v0.dev',
+  openGraph: {
+    title: "2048 Hexagon - Puzzle Game",
+    description:
+      "A hexagonal twist on the classic 2048 puzzle game. Swipe in 6 directions to combine tiles and reach 2048!",
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: '2048 Hexagon - Puzzle Game'
+      }
+    ]
+  }
 }
 
 export const viewport: Viewport = {
